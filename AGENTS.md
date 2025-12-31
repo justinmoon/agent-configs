@@ -23,6 +23,7 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 - Oracle: run `npx -y @steipete/oracle --help` once/session before first use.
 - Style: telegraph. Drop filler/grammar. Min tokens (global AGENTS + replies).
 - Use nix where possible
+- Python scripts: prefer `uv run` + inline deps block (`# /// script` / `dependencies = [...]`) at top.
 - Be 100% merge conflicts are resolved correctly; ask questions until you are.
 
 ## Screenshots (“use a screenshot”)
