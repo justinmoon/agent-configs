@@ -8,7 +8,7 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 - Workspace: `~/code`. Missing justinmoon repo: clone `https://github.com/steipete/<repo>.git`.
 - 3rd-party/non-justinmoon (don't hesitate): clone under `~/code/oss`.
 - Files: repo or `~/Projects/agent-scripts`.
-- PRs: use `gh pr view/diff` (no URLs).
+- Reviews: use `crank review` or local git diff (no GitHub-only workflow).
 - “Make a note” => edit AGENTS.md (shortcut; not a blocker).
 - Guardrails: use `trash` for deletes.
 - Need upstream file: stage in `/tmp/`, then cherry-pick; never overwrite tracked.
@@ -16,7 +16,7 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 - Keep files <~500 LOC; split/refactor as needed.
 - Commits: Conventional Commits (`feat|fix|refactor|build|ci|chore|docs|style|perf|test`).
 - Subagents: read `docs/subagent.md`.
-- CI: `gh run list/view` (rerun/fix til green).
+- CI: use `just pre-merge` for local checks; land with `crank land`. No GitHub Actions/merge queue.
 - Prefer end-to-end verify; if blocked, say what’s missing.
 - New deps: quick health check (recent releases/commits, adoption).
 - Web: search early; quote exact errors; prefer 2024–2025 sources; fallback Firecrawl (`pnpm mcp:*`) / `mcporter`.
@@ -46,14 +46,14 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 
 ## Build / Test
 - Before handoff: run `just pre-merge` (all ci checks).
-- CI red: `gh run list/view`, rerun, fix, push, repeat til green.
+- CI red: rerun `crank merge --dry-run` (or `just pre-merge`), fix, repeat til green.
 - Keep it observable (logs, panes, tails, MCP/browser tools).
 
 ## Git
 - Safe by default: `git status/diff/log`. Push only when user asks.
-- `git checkout` ok for PR review / explicit request.
+- `git checkout` ok for review / explicit request.
 - Branch changes require user consent.
-- Destructive ops forbidden unless explicit (`reset --hard`, `clean`, `restore`, `rm`, …).
+- Destructive ops forbidden unless explicit (`reset --hard`, `clean`, `restore`, `rm`, `git worktree prune`, …).
 - Remotes under `~/code`
 - Commit helper on PATH: `committer` (bash). Prefer it; if repo has `./scripts/committer`, use that.
 - Don’t delete/rename unexpected stuff; stop + ask.

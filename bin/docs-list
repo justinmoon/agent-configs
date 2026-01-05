@@ -5,7 +5,14 @@ import { join, relative } from 'node:path';
 
 const DOCS_DIR = join(process.cwd(), 'docs');
 
+const args = process.argv.slice(2);
+const checkMode = args.includes('--check') || args.includes('check');
+
 if (!existsSync(DOCS_DIR)) {
+  if (checkMode) {
+    // No docs folder is fine for check mode
+    process.exit(0);
+  }
   console.log('No docs/ folder found.');
   process.exit(0);
 }
@@ -124,9 +131,42 @@ function extractMetadata(fullPath: string): {
   return { summary: normalized, readWhen };
 }
 
-console.log('Listing all markdown files in docs folder:');
-
 const markdownFiles = walkMarkdownFiles(DOCS_DIR);
+
+if (checkMode) {
+  // Check mode: validate all docs have proper frontmatter
+  const failures: { file: string; error: string }[] = [];
+
+  for (const relativePath of markdownFiles) {
+    const fullPath = join(DOCS_DIR, relativePath);
+    const { summary, error } = extractMetadata(fullPath);
+    if (!summary && error) {
+      failures.push({ file: relativePath, error });
+    }
+  }
+
+  if (failures.length > 0) {
+    console.error('Docs frontmatter check failed:');
+    for (const { file, error } of failures) {
+      console.error(`  ${file}: ${error}`);
+    }
+    console.error(`\nAll docs must have frontmatter with 'summary' and 'read_when' fields.`);
+    console.error('Example:');
+    console.error('---');
+    console.error('summary: Brief description of what this doc covers');
+    console.error('read_when:');
+    console.error('  - when to read this doc');
+    console.error('  - another trigger condition');
+    console.error('---');
+    process.exit(1);
+  }
+
+  console.log(`docs-list check passed: ${markdownFiles.length} docs have valid frontmatter`);
+  process.exit(0);
+}
+
+// Normal mode: list docs
+console.log('Listing all markdown files in docs folder:');
 
 for (const relativePath of markdownFiles) {
   const fullPath = join(DOCS_DIR, relativePath);
