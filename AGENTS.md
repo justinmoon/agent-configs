@@ -16,7 +16,7 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 - Keep files <~500 LOC; split/refactor as needed.
 - Commits: Conventional Commits (`feat|fix|refactor|build|ci|chore|docs|style|perf|test`).
 - Subagents: read `docs/subagent.md`.
-- CI: use `just pre-merge` for local checks; land with `crank land`. No GitHub Actions/merge queue.
+- CI: use `just pre-merge` for local checks; land via the land workflow (see repo docs). No GitHub Actions/merge queue.
 - Prefer end-to-end verify; if blocked, say what’s missing.
 - New deps: quick health check (recent releases/commits, adoption).
 - Web: search early; quote exact errors; prefer 2024–2025 sources; fallback Firecrawl (`pnpm mcp:*`) / `mcporter`.
