@@ -10,6 +10,8 @@ Common implementation patterns for Datastar applications.
 2. **Fat Morph** - Send large DOM chunks. Morphing is efficient.
 3. **Restrained Signals** - Only for UI interactions and form binding.
 4. **No Optimistic Updates** - Show loading, confirm after backend response.
+5. **Always Show Feedback** - User must ALWAYS know what's happening. No silent actions.
+6. **No Silent Failures** - Every error MUST be shown to the user. Never swallow errors.
 
 ### Anti-Patterns
 
@@ -28,6 +30,76 @@ Common implementation patterns for Datastar applications.
 
 <!-- GOOD: Minimal local state, backend drives UI -->
 <div data-signals="{_menuOpen: false, searchQuery: ''}">
+```
+
+```html
+<!-- BAD: Button with no loading state or feedback -->
+<button data-on:click="@post('/delete')">Delete</button>
+
+<!-- GOOD: Loading state + disabled during action + feedback target -->
+<button data-on:click="@delete('/items/42')"
+        data-indicator:_deleting
+        data-attr:disabled="$_deleting">
+  <span data-show="!$_deleting">Delete</span>
+  <span data-show="$_deleting">Deleting...</span>
+</button>
+<div id="delete-result"></div>
+```
+
+## Button UX Requirements (Mandatory)
+
+**Every button that performs an action MUST have:**
+
+1. **Loading indicator** - `data-indicator:_loading` to track request state
+2. **Disabled during action** - `data-attr:disabled="$_loading"` to prevent double-clicks
+3. **Visual feedback** - Show "Loading...", spinner, or change button text
+4. **Result target** - Element where backend can patch success/error messages
+
+### Standard Button Pattern
+
+```html
+<button data-on:click="@post('/action')"
+        data-indicator:_actionLoading
+        data-attr:disabled="$_actionLoading">
+  <span data-show="!$_actionLoading">Do Action</span>
+  <span data-show="$_actionLoading">Processing...</span>
+</button>
+<div id="action-result"></div>
+```
+
+### Backend MUST Respond With Feedback
+
+```rust
+// On success - ALWAYS confirm to user
+let patch = PatchElements::new(r#"<div id="action-result" class="success">Done!</div>"#);
+yielder.yield_item(Ok(patch.write_as_axum_sse_event())).await;
+
+// On error - NEVER fail silently
+let patch = PatchElements::new(r#"<div id="action-result" class="error">Failed: {reason}</div>"#);
+yielder.yield_item(Ok(patch.write_as_axum_sse_event())).await;
+```
+
+### Delete Button With Confirmation
+
+```html
+<button data-on:click="if(confirm('Are you sure?')) @delete('/items/42')"
+        data-indicator:_deleting
+        data-attr:disabled="$_deleting">
+  <span data-show="!$_deleting">🗑 Delete</span>
+  <span data-show="$_deleting">Deleting...</span>
+</button>
+```
+
+### Icon Button With Spinner
+
+```html
+<button data-on:click="@post('/refresh')"
+        data-indicator:_refreshing
+        data-attr:disabled="$_refreshing"
+        class="icon-btn">
+  <svg data-show="!$_refreshing"><!-- refresh icon --></svg>
+  <svg data-show="$_refreshing" class="spin"><!-- spinner icon --></svg>
+</button>
 ```
 
 ## Form Handling
@@ -77,7 +149,14 @@ Common implementation patterns for Datastar applications.
 ```html
 <tr id="user-1">
   <td>Alice</td>
-  <td><button data-on:click="@get('/users/1/edit')">Edit</button></td>
+  <td>
+    <button data-on:click="@get('/users/1/edit')"
+            data-indicator:_editLoading
+            data-attr:disabled="$_editLoading">
+      <span data-show="!$_editLoading">Edit</span>
+      <span data-show="$_editLoading">Loading...</span>
+    </button>
+  </td>
 </tr>
 ```
 
@@ -89,12 +168,15 @@ Backend replaces with edit form, save returns to view mode.
 <tr id="item-42">
   <td>Item Name</td>
   <td>
-    <button data-on:click="if(confirm('Delete?')) @delete('/items/42')">
-      Delete
+    <button data-on:click="if(confirm('Delete?')) @delete('/items/42')"
+            data-indicator:_deleting
+            data-attr:disabled="$_deleting">
+      <span data-show="!$_deleting">Delete</span>
+      <span data-show="$_deleting">Deleting...</span>
     </button>
   </td>
 </tr>
-```
+<div id="delete-result"></div> <!-- Backend patches success/error here -->
 
 ### Infinite Scroll
 
@@ -145,8 +227,14 @@ data: elements <li class="new">New message!</li>
 <div data-init="@get('/resource/stream')">
   <div id="content"></div>
 
-  <!-- Write action -->
-  <button data-on:click="@post('/resource/update')">Update</button>
+  <!-- Write action with loading state -->
+  <button data-on:click="@post('/resource/update')"
+          data-indicator:_updating
+          data-attr:disabled="$_updating">
+    <span data-show="!$_updating">Update</span>
+    <span data-show="$_updating">Updating...</span>
+  </button>
+  <div id="update-result"></div>
 </div>
 ```
 
@@ -202,8 +290,11 @@ data: elements <li class="new">New message!</li>
 
 ```html
 <div data-signals="{_modalOpen: false}">
-  <button data-on:click="$_modalOpen = true; @get('/modal/content')">
-    Open Modal
+  <button data-on:click="$_modalOpen = true; @get('/modal/content')"
+          data-indicator:_modalLoading
+          data-attr:disabled="$_modalLoading">
+    <span data-show="!$_modalLoading">Open Modal</span>
+    <span data-show="$_modalLoading">Loading...</span>
   </button>
 
   <div data-show="$_modalOpen" class="modal-backdrop"
@@ -225,8 +316,11 @@ data: elements <li class="new">New message!</li>
       Overview
     </button>
     <button data-on:click="$_activeTab = 'details'; @get('/tabs/details')"
-            data-class="{'active': $_activeTab === 'details'}">
-      Details
+            data-class="{'active': $_activeTab === 'details'}"
+            data-indicator:_detailsLoading
+            data-attr:disabled="$_detailsLoading">
+      <span data-show="!$_detailsLoading">Details</span>
+      <span data-show="$_detailsLoading">Loading...</span>
     </button>
   </div>
 
@@ -269,8 +363,11 @@ data: elements <li class="new">New message!</li>
 
 ```html
 <div data-signals="{progress: 0}">
-  <button data-on:click="@post('/start-job')" data-indicator:_processing>
-    Start
+  <button data-on:click="@post('/start-job')"
+          data-indicator:_processing
+          data-attr:disabled="$_processing">
+    <span data-show="!$_processing">Start</span>
+    <span data-show="$_processing">Processing...</span>
   </button>
   <div data-show="$_processing || $progress > 0">
     <div class="progress-bar">
@@ -278,6 +375,7 @@ data: elements <li class="new">New message!</li>
     </div>
     <span data-text="`${$progress}%`"></span>
   </div>
+  <div id="job-result"></div> <!-- Backend patches success/error here -->
 </div>
 ```
 
@@ -318,7 +416,9 @@ Backend sends periodic comments to prevent timeout:
 : keepalive
 ```
 
-### Error Handling
+### Error Handling (No Silent Failures!)
+
+**CRITICAL: Every backend error MUST be shown to the user. Never swallow errors.**
 
 Send errors as patches:
 ```
@@ -328,4 +428,31 @@ data: elements <div class="error">Something went wrong!</div>
 
 event: datastar-patch-signals
 data: signals {error: "Failed to save", _loading: false}
+```
+
+**Rust pattern for guaranteed error feedback:**
+```rust
+async fn action_handler() -> impl IntoResponse {
+    Sse::new(stream_fn(|mut yielder| async move {
+        match do_action().await {
+            Ok(result) => {
+                // Success feedback
+                let patch = PatchElements::new(
+                    r#"<div id="result" class="success">Action completed!</div>"#
+                );
+                yielder.yield_item(Ok(patch.write_as_axum_sse_event())).await;
+            }
+            Err(e) => {
+                // Error feedback - NEVER skip this!
+                let patch = PatchElements::new(
+                    &format!(r#"<div id="result" class="error">Error: {}</div>"#, e)
+                );
+                yielder.yield_item(Ok(patch.write_as_axum_sse_event())).await;
+            }
+        }
+        // Always clear loading state
+        let patch = PatchSignals::new(r#"{"_loading": false}"#);
+        yielder.yield_item(Ok(patch.write_as_axum_sse_event())).await;
+    }))
+}
 ```

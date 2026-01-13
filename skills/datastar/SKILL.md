@@ -164,12 +164,46 @@ async fn handler(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespons
 </div>
 ```
 
+## UX Requirements (Mandatory)
+
+**Every button that triggers an action MUST:**
+
+1. **Show Loading State** - Use `data-indicator` to show the action is in progress
+2. **Prevent Double-Click** - Loading state inherently disables re-triggering; use `data-attr:disabled="$_loading"` for explicit disable
+3. **Show Feedback** - User must always know what happened (success, error, or loading)
+4. **Handle Errors Visibly** - No silent failures. Backend MUST send error patches on failure
+
+```html
+<!-- CORRECT: Full UX pattern -->
+<button data-on:click="@post('/save')"
+        data-indicator:_saving
+        data-attr:disabled="$_saving">
+  <span data-show="!$_saving">Save</span>
+  <span data-show="$_saving">Saving...</span>
+</button>
+<div id="save-result"></div> <!-- Backend patches success/error here -->
+
+<!-- WRONG: No loading state, no feedback -->
+<button data-on:click="@post('/save')">Save</button>
+```
+
+**Backend MUST always respond with feedback:**
+```rust
+// Success: patch result element
+let patch = PatchElements::new(r#"<div id="save-result" class="success">Saved!</div>"#);
+
+// Error: patch error message (NEVER fail silently)
+let patch = PatchElements::new(r#"<div id="save-result" class="error">Failed to save: reason</div>"#);
+```
+
 ## Anti-Patterns to AVOID
 
 1. **Optimistic Updates** - Don't show success before backend confirms
 2. **Too Much Frontend State** - Backend is source of truth
 3. **Custom History Management** - Use standard navigation
 4. **Trusting Cached State** - Always fetch current state from backend
+5. **Silent Failures** - Never swallow errors; always show user what happened
+6. **Buttons Without Loading States** - Every action button needs `data-indicator`
 
 ## Additional Resources
 
