@@ -30,6 +30,19 @@ ln -sfn "$SCRIPT_DIR/skills" ~/.config/opencode/skill
 if [ -d "$SCRIPT_DIR/opencode/tool" ]; then
     rm -rf ~/.config/opencode/tool 2>/dev/null || true
     ln -sfn "$SCRIPT_DIR/opencode/tool" ~/.config/opencode/tool
+
+    # Install tool dependencies
+    if [ -f "$SCRIPT_DIR/opencode/package.json" ]; then
+        echo "Installing OpenCode tool dependencies..."
+        cd "$SCRIPT_DIR/opencode"
+        if command -v bun &> /dev/null; then
+            bun install --silent
+        elif command -v npm &> /dev/null; then
+            npm install --silent
+        else
+            echo "Warning: Neither bun nor npm found. OpenCode tools may not work."
+        fi
+    fi
 fi
 
 echo ""
