@@ -102,7 +102,11 @@ format: nix-check
     # auto-fix formatting
 
 test: nix-check
-    # unit/integration tests
+    # unit/integration tests (delegates to test-unit)
+
+test-unit *args: nix-check
+    # run unit/integration tests with optional pattern
+    cargo test {{args}}
 
 test-e2e *args: nix-check
     # E2E tests (playwright)
@@ -299,12 +303,15 @@ Used by:
 
 ## Testing Conventions
 
-- **Unit tests:** `just test`
-- **E2E tests:** `just test-e2e`
-- **Single test:** `just test-e2e tests/e2e/auth.spec.ts`
-- **All CI:** `just pre-merge`
+**Rule:** Always run tests via the app `justfile`, inside the app's nix shell. If a test flow isn't covered, edit the `justfile` to add it. At start of work in any app, run `just` to list commands.
+
+- **All tests:** `nix develop --command just test`
+- **Unit/integration:** `nix develop --command just test-unit -- <pattern>`
+- **E2E:** `nix develop --command just test-e2e -- <pattern>`
+- **All CI:** `nix develop --command just pre-merge`
 
 E2E tests run against real PostgreSQL. No mocking the database.
+
 
 ## Common Commands
 
@@ -325,8 +332,11 @@ just pre-merge
 # Format code
 just format
 
-# Run specific test
-just test-e2e tests/e2e/login.spec.ts
+# Run specific test (unit/integration)
+just test-unit -- my_test_name_or_module
+
+# Run specific test (e2e)
+just test-e2e -- tests/e2e/login.spec.ts
 
 # Database operations
 just pg-start

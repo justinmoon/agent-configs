@@ -48,6 +48,8 @@ Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 - Before handoff: run `just pre-merge` (all ci checks).
 - CI red: rerun `crank merge --dry-run` (or `just pre-merge`), fix, repeat til green.
 - Keep it observable (logs, panes, tails, MCP/browser tools).
+- Tests: always run via app `justfile` (inside nix shell). If missing, edit the `justfile` to add it.
+- Start of work in any app: run `just` to list available commands.
 
 ## Git
 - Safe by default: `git status/diff/log`. Push only when user asks.
