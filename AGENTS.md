@@ -1,6 +1,5 @@
 # AGENTS.MD
 
-Justin owns this. Start: say hi + 1 motivating line.
 Work style: telegraph; noun-phrases ok; drop grammar; min tokens.
 
 ## Agent Protocol
